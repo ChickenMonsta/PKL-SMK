@@ -21,6 +21,7 @@ function getCurrentUser() {
         'email' => $_SESSION['email'] ?? null,
         'nama_lengkap' => $_SESSION['nama_lengkap'] ?? null,
         'role' => $_SESSION['role'] ?? null,
+        'nis' => $_SESSION['nis'] ?? null, // Ditambahkan untuk kelengkapan
         'foto_profil' => $_SESSION['foto_profil'] ?? null
     ];
 }
@@ -84,6 +85,7 @@ function login($username, $password, $remember = false) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
+        $_SESSION['nis'] = $user['nis']; // <-- PERBAIKAN UTAMA: NIS disimpan
         $_SESSION['role'] = $user['role'];
         $_SESSION['foto_profil'] = $user['foto_profil'];
         $_SESSION['last_activity'] = time();
@@ -225,6 +227,7 @@ function checkRememberMe() {
             $_SESSION['username'] = $user['username'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
+            $_SESSION['nis'] = $user['nis']; // <-- PERBAIKAN UTAMA: NIS disimpan
             $_SESSION['role'] = $user['role'];
             $_SESSION['foto_profil'] = $user['foto_profil'];
             $_SESSION['last_activity'] = time();
@@ -277,6 +280,18 @@ function requireSiswa() {
         
         redirect('index.php?page=dashboard&error=forbidden');
     }
+    
+    // TAMBAHAN LOGIKA PENTING: Untuk memastikan data NIS ter-load saat requireSiswa dipanggil 
+    // Walaupun sudah diperbaiki di login, ini bisa jadi fallback yang baik
+    if (!isset($_SESSION['nis'])) {
+        global $pdo;
+        $stmt = $pdo->prepare("SELECT nis FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $data = $stmt->fetch();
+        if ($data) {
+            $_SESSION['nis'] = $data['nis'];
+        }
+    }
 }
 
 function requireRole($role) {
@@ -310,3 +325,4 @@ function getIntendedUrl() {
 
 // Check remember me on every page load
 checkRememberMe();
+?>
