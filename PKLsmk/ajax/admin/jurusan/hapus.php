@@ -1,34 +1,21 @@
 <?php
-session_start();
-require_once '../../includes/config.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
+require_once __DIR__ . '/../../../bootstrap.php';
 
 if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit();
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
     }
 
     $id = intval($_POST['id'] ?? 0);
     $action = $_POST['action'] ?? 'nonaktifkan'; // nonaktifkan or aktifkan
     
     if ($id <= 0) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'ID jurusan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'ID jurusan tidak valid'], 400);
     }
     
     try {
@@ -38,11 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $jurusan = $stmt->fetch();
         
         if (!$jurusan) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Jurusan tidak ditemukan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Jurusan tidak ditemukan'], 404);
         }
         
         // Check if jurusan has active pendaftaran
@@ -52,11 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $active_pendaftaran = $stmt->fetch()['total'];
             
             if ($active_pendaftaran > 0) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Tidak dapat menonaktifkan jurusan yang masih memiliki pendaftaran aktif'
-                ]);
-                exit();
+                sendJson(['status' => 'error', 'message' => 'Tidak dapat menonaktifkan jurusan yang masih memiliki pendaftaran aktif'], 409);
             }
         }
         
@@ -69,20 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action_text = $action == 'nonaktifkan' ? 'Menonaktifkan' : 'Mengaktifkan';
         logActivity($_SESSION['user_id'], strtoupper($action) . '_JURUSAN', "$action_text jurusan: {$jurusan['nama_jurusan']} ({$jurusan['kode_jurusan']})");
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => "Jurusan berhasil di" . ($action == 'nonaktifkan' ? 'nonaktifkan' : 'aktifkan')
-        ]);
+        sendJson(['status' => 'success', 'message' => "Jurusan berhasil di" . ($action == 'nonaktifkan' ? 'nonaktifkan' : 'aktifkan')], 200);
         
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database: ' . $e->getMessage()
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database: ' . $e->getMessage()], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 ?>

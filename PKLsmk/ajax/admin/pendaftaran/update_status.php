@@ -1,23 +1,14 @@
 <?php
-session_start();
-require_once '../../includes/config.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
+require_once __DIR__ . '/../../../bootstrap.php';
 
 if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit();
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
     }
 
     $id = intval($_POST['id'] ?? 0);
@@ -36,11 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!empty($errors)) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => implode(', ', $errors)
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => implode(', ', $errors)], 400);
     }
     
     try {
@@ -57,20 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pendaftaran = $stmt->fetch();
         
         if (!$pendaftaran) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Pendaftaran tidak ditemukan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Pendaftaran tidak ditemukan'], 404);
         }
         
         // Check if status is already set
         if ($pendaftaran['status'] == $status) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => "Status pendaftaran sudah $status"
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => "Status pendaftaran sudah $status"], 400);
         }
         
         // Check kuota perusahaan if status is diterima
@@ -88,11 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $kuota_perusahaan = $stmt->fetch()['kuota'];
             
             if ($total_diterima >= $kuota_perusahaan) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Kuota perusahaan sudah penuh'
-                ]);
-                exit();
+                sendJson(['status' => 'error', 'message' => 'Kuota perusahaan sudah penuh'], 409);
             }
         }
         
@@ -107,21 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Send notification email (you can implement this later)
         // sendStatusNotification($pendaftaran['email'], $pendaftaran['nama_lengkap'], $status, $catatan);
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => "Pendaftaran berhasil di$status_text"
-        ]);
+        sendJson(['status' => 'success', 'message' => "Pendaftaran berhasil di$status_text"], 200);
         
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database: ' . $e->getMessage()
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database: ' . $e->getMessage()], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 
 // Function to send notification email (placeholder)

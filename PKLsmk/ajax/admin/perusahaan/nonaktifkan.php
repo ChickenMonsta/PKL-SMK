@@ -1,33 +1,23 @@
 <?php
-session_start();
-require_once '../../includes/config.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
+require_once __DIR__ . '/../../../bootstrap.php';
 
 if (!isAdmin()) {
     http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
         exit();
     }
 
     $id = intval($_POST['id'] ?? 0);
     
     if ($id <= 0) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'ID perusahaan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'ID perusahaan tidak valid'], 400);
     }
     
     try {
@@ -37,11 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $perusahaan = $stmt->fetch();
         
         if (!$perusahaan) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Perusahaan tidak ditemukan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Perusahaan tidak ditemukan'], 404);
         }
         
         // Update status to inactive
@@ -51,20 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log activity
         logActivity($_SESSION['user_id'], 'NONAKTIFKAN_PERUSAHAAN', "Menonaktifkan perusahaan: {$perusahaan['nama_perusahaan']} (ID: $id)");
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Perusahaan berhasil dinonaktifkan'
-        ]);
+        sendJson(['status' => 'success', 'message' => 'Perusahaan berhasil dinonaktifkan'], 200);
         
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database: ' . $e->getMessage()
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database: ' . $e->getMessage()], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 ?>

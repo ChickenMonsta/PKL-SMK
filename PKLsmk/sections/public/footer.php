@@ -67,7 +67,7 @@
                             <i class="fas fa-map-marker-alt text-white text-sm"></i>
                         </div>
                         <div>
-                            <p class="text-gray-300 text-sm leading-relaxed">Jl. Pendidikan No. 123, Kota Bandung, Jawa Barat 40123</p>
+                            <p class="text-gray-300 text-sm leading-relaxed">Komp. Koperasi Pemko, Batam centre, Belian, Kec. Batam Kota, Kota Batam, Kepulauan Riau</p>
                         </div>
                     </li>
                     <li class="flex items-center space-x-4 group transform transition-all duration-300 hover:translate-x-2">
@@ -80,7 +80,7 @@
                         <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
                             <i class="fas fa-envelope text-white text-sm"></i>
                         </div>
-                        <span class="text-gray-300">info@smkn7bandung.sch.id</span>
+                        <span class="text-gray-300">info@smkn7batam.sch.id</span>
                     </li>
                 </ul>
             </div>
@@ -88,7 +88,7 @@
         
         <div class="border-t border-gray-700 pt-8 text-center">
             <p class="text-gray-400 text-sm">
-                &copy; 2024 SMK Negeri 7 Bandung. All rights reserved. | 
+                &copy; 2024 SMK Negeri 7 Batam. All rights reserved. | 
                 <span class="text-yellow-400">Membangun Generasi Unggul untuk Indonesia</span>
             </p>
         </div>

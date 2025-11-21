@@ -20,6 +20,7 @@ $(document).ready(function() {
         const selesai = new Date($('#tanggal_selesai').val());
         
         if (mulai && selesai) {
+            // Check if end date is before or equal to start date
             if (selesai <= mulai) {
                 $('#tanggal_selesai').val('');
                 showAlert('error', 'Error', 'Tanggal selesai harus setelah tanggal mulai');
@@ -27,18 +28,21 @@ $(document).ready(function() {
                 return;
             }
             
+            // Calculate duration
             const diffTime = Math.abs(selesai - mulai);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             $('#info-durasi').html(`Durasi PKL: <strong>${diffDays} hari</strong>`);
         }
     });
 
-    // Form validation
+    // Form validation for reason text area
     $('#alasan_pkl').on('input', function() {
         const text = $(this).val();
         const charCount = text.length;
         
+        // Simple visual feedback for character count (min 100)
         if (charCount > 0 && charCount < 100) {
+            // Assuming classes like border-yellow-500 exist in your CSS framework (e.g., Tailwind CSS)
             $(this).addClass('border-yellow-500').removeClass('border-green-500');
         } else if (charCount >= 100) {
             $(this).addClass('border-green-500').removeClass('border-yellow-500');
@@ -47,7 +51,7 @@ $(document).ready(function() {
         }
     });
 
-    // File validation
+    // File validation (Max 5MB)
     $('input[type="file"]').on('change', function() {
         const file = this.files[0];
         if (file) {
@@ -63,7 +67,7 @@ $(document).ready(function() {
     $('#formPendaftaranPKL').on('submit', function(e) {
         e.preventDefault();
         
-        // Basic validation
+        // Final validation before submission
         const alasanPkl = $('#alasan_pkl').val();
         if (alasanPkl.length < 100) {
             showAlert('error', 'Error', 'Alasan PKL minimal 100 karakter');
@@ -92,6 +96,7 @@ $(document).ready(function() {
                 if (result.status === 'success') {
                     showAlert('success', 'Berhasil', result.message)
                         .then(() => {
+                            // Redirect to dashboard after successful registration
                             window.location.href = 'index.php?page=siswa&section=dashboard';
                         });
                 } else {

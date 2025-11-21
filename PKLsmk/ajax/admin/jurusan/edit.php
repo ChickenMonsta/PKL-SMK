@@ -1,23 +1,14 @@
 <?php
-session_start();
-require_once '../../includes/config.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
+require_once __DIR__ . '/../../../bootstrap.php';
 
 if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit();
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
     }
 
     $id = intval($_POST['id'] ?? 0);
@@ -55,11 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!empty($errors)) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => implode(', ', $errors)
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => implode(', ', $errors)], 400);
     }
     
     try {
@@ -68,11 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$id]);
         
         if (!$stmt->fetch()) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Jurusan tidak ditemukan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Jurusan tidak ditemukan'], 404);
         }
         
         // Check for duplicate kode jurusan (excluding current record)
@@ -80,11 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$kode_jurusan, $id]);
         
         if ($stmt->fetch()) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Kode jurusan sudah digunakan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Kode jurusan sudah digunakan'], 409);
         }
         
         // Check for duplicate nama jurusan (excluding current record)
@@ -92,11 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$nama_jurusan, $id]);
         
         if ($stmt->fetch()) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nama jurusan sudah terdaftar'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Nama jurusan sudah terdaftar'], 409);
         }
         
         // Update jurusan
@@ -106,20 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log activity
         logActivity($_SESSION['user_id'], 'EDIT_JURUSAN', "Mengedit jurusan: $nama_jurusan ($kode_jurusan)");
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Jurusan berhasil diperbarui'
-        ]);
+        sendJson(['status' => 'success', 'message' => 'Jurusan berhasil diperbarui'], 200);
         
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database: ' . $e->getMessage()
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database: ' . $e->getMessage()], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 ?>

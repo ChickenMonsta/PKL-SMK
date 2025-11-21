@@ -2,19 +2,13 @@
 require_once 'bootstrap.php';
 
 if (!isSiswa()) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit();
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
     }
 
     $user_id = $_SESSION['user_id'];
@@ -31,11 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("SELECT id FROM pendaftaran_pkl WHERE user_id = ? AND status IN ('pending', 'diterima')");
     $stmt->execute([$user_id]);
     if ($stmt->fetch()) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Anda sudah memiliki pendaftaran yang sedang diproses'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Anda sudah memiliki pendaftaran yang sedang diproses'], 409);
     }
 
     if ($jurusan_id <= 0) {
@@ -63,11 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($errors)) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => implode(', ', $errors)
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => implode(', ', $errors)], 400);
     }
 
     try {
@@ -90,20 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log activity
         logActivity($user_id, 'PENDAFTARAN_PKL', "Mengajukan pendaftaran PKL");
 
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Pendaftaran berhasil dikirim! Status akan diperiksa oleh admin.'
-        ]);
+        sendJson(['status' => 'success', 'message' => 'Pendaftaran berhasil dikirim! Status akan diperiksa oleh admin.'], 201);
 
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database. Silakan coba lagi.'
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database. Silakan coba lagi.'], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 ?>

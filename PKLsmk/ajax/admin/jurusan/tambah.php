@@ -3,19 +3,13 @@ require_once __DIR__ . '/../../../bootstrap.php';
 requireAdmin();
 
 if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit();
+    sendJson(['status' => 'error', 'message' => 'Unauthorized access'], 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Token keamanan tidak valid'
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => 'Token keamanan tidak valid'], 400);
     }
 
     $kode_jurusan = strtoupper(sanitizeInput($_POST['kode_jurusan'] ?? ''));
@@ -43,11 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!empty($errors)) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => implode(', ', $errors)
-        ]);
-        exit();
+        sendJson(['status' => 'error', 'message' => implode(', ', $errors)], 400);
     }
     
     try {
@@ -56,11 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$kode_jurusan]);
         
         if ($stmt->fetch()) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Kode jurusan sudah digunakan'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Kode jurusan sudah digunakan'], 409);
         }
         
         // Check if nama jurusan already exists
@@ -68,11 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$nama_jurusan]);
         
         if ($stmt->fetch()) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nama jurusan sudah terdaftar'
-            ]);
-            exit();
+            sendJson(['status' => 'error', 'message' => 'Nama jurusan sudah terdaftar'], 409);
         }
         
         // Insert new jurusan
@@ -82,20 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log activity
         logActivity($_SESSION['user_id'], 'TAMBAH_JURUSAN', "Menambah jurusan: $nama_jurusan ($kode_jurusan)");
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Jurusan berhasil ditambahkan'
-        ]);
+        sendJson(['status' => 'success', 'message' => 'Jurusan berhasil ditambahkan'], 201);
         
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan database: ' . $e->getMessage()
-        ]);
+        sendJson(['status' => 'error', 'message' => 'Terjadi kesalahan database: ' . $e->getMessage()], 500);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    sendJson(['status' => 'error', 'message' => 'Method not allowed'], 405);
 }
 ?>

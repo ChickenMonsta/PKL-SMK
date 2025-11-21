@@ -2,263 +2,298 @@
 require_once __DIR__ . '/../../bootstrap.php';
 requireSiswa();
 
-
 $user_id = $_SESSION['user_id'];
 
-// Ambil data jurusan aktif
+// Ambil data jurusan dan perusahaan
 $stmt = $pdo->query("SELECT * FROM jurusan WHERE status = 'active' ORDER BY nama_jurusan");
-$jurusan = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$jurusan = $stmt->fetchAll();
 
-// Ambil data perusahaan aktif
 $stmt = $pdo->query("SELECT * FROM perusahaan WHERE status = 'active' ORDER BY nama_perusahaan");
-$perusahaan = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$perusahaan = $stmt->fetchAll();
 
-// Cek apakah siswa sudah memiliki pendaftaran aktif
-$stmt = $pdo->prepare("SELECT id FROM pendaftaran_pkl WHERE user_id = ? AND status IN ('pending', 'diterima')");
+// Generate CSRF token
+$csrf_token = generateCSRFToken();
+
+// Cek apakah sudah ada pendaftaran aktif
+$stmt = $pdo->prepare("SELECT status FROM pendaftaran_pkl WHERE user_id = ? AND status IN ('pending', 'diterima') ORDER BY created_at DESC LIMIT 1");
 $stmt->execute([$user_id]);
 $pendaftaran_aktif = $stmt->fetch();
-
-// Ambil data user untuk prefill form
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$user_data = $stmt->fetch();
 ?>
 
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Form Pendaftaran PKL</h1>
-                    <p class="text-gray-600">Isi formulir pendaftaran Praktik Kerja Lapangan</p>
-                </div>
-                <div class="flex space-x-4">
-                    <a href="index.php?page=siswa&section=dashboard" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i>Kembali
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mx-auto px-4 py-8">
-        <?php if ($pendaftaran_aktif): ?>
-        <!-- Warning jika sudah ada pendaftaran aktif -->
-        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mb-8">
-            <div class="flex items-start space-x-4">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Pendaftaran Aktif Ditemukan</h3>
-                    <p class="text-yellow-700">
-                        Anda sudah memiliki pendaftaran PKL yang sedang diproses atau telah diterima. 
-                        Silakan tunggu hingga pendaftaran sebelumnya selesai diproses atau hubungi admin 
-                        untuk informasi lebih lanjut.
-                    </p>
-                    <div class="mt-4">
-                        <a href="index.php?page=siswa&section=dashboard" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                            <i class="fas fa-eye mr-2"></i>Lihat Status Pendaftaran
-                        </a>
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-orange-500 px-6 py-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Pendaftaran PKL</h1>
+                        <p class="text-blue-100">Isi formulir pendaftaran PKL dengan lengkap dan benar</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-file-alt text-white text-2xl"></i>
                     </div>
                 </div>
             </div>
-        </div>
-        <?php else: ?>
-        <!-- Form Pendaftaran -->
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 px-6 py-4">
-                    <h2 class="text-xl font-bold text-white">Formulir Pendaftaran PKL</h2>
-                    <p class="text-yellow-100 text-sm">Lengkapi semua data dengan benar</p>
+
+            <?php if ($pendaftaran_aktif): ?>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mx-6 mt-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">
+                                Anda sudah memiliki pendaftaran dengan status: 
+                                <?= getStatusBadge($pendaftaran_aktif['status']) ?>
+                            </h3>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Silakan tunggu konfirmasi dari admin atau periksa di dashboard Anda.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                
-                <form id="formPendaftaranPKL" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            <?php endif; ?>
+
+            <!-- Form -->
+            <div class="p-6">
+                <form id="formPendaftaran" action="process_pendaftaran.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+                    
                     <!-- Data Pribadi -->
-                    <div class="border-b border-gray-200 pb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-user-circle text-blue-600 mr-2"></i>
+                    <div class="mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-user-circle text-blue-500 mr-3"></i>
                             Data Pribadi
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Nama Lengkap <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" class="form-input" value="<?= htmlspecialchars($user_data['nama_lengkap']) ?>" readonly>
-                            </div>
-                            
-                            <div>
-                                <label class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    NIS <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" class="form-input" value="<?= htmlspecialchars($user_data['nis'] ?? 'Belum diisi') ?>" readonly>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Email <span class="text-red-500">*</span>
-                                </label>
-                                <input type="email" class="form-input" value="<?= htmlspecialchars($user_data['email']) ?>" readonly>
-                            </div>
-                            
-                            <div>
-                                <label class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    No. Telepon
-                                </label>
-                                <input type="text" class="form-input" value="<?= htmlspecialchars($user_data['no_telepon'] ?? 'Belum diisi') ?>" readonly>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <a href="index.php?page=siswa&section=profile" class="text-yellow-600 hover:text-yellow-700 font-semibold text-sm flex items-center">
-                                <i class="fas fa-edit mr-1"></i>Edit profil jika data tidak sesuai
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Pilihan Jurusan dan Perusahaan -->
-                    <div class="border-b border-gray-200 pb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-briefcase text-green-600 mr-2"></i>
-                            Pilihan PKL
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="jurusan_id" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Pilih Jurusan <span class="text-red-500">*</span>
-                                </label>
-                                <select class="form-input" id="jurusan_id" name="jurusan_id" required>
-                                    <option value="">-- Pilih Jurusan --</option>
-                                    <?php foreach ($jurusan as $j): ?>
-                                    <option value="<?= $j['id'] ?>" data-kuota="<?= $j['kuota'] ?>">
-                                        <?= htmlspecialchars($j['nama_jurusan']) ?> (Kuota: <?= $j['kuota'] ?>)
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <p class="text-xs text-gray-500 mt-1" id="info-kuota"></p>
-                            </div>
-                            
-                            <div>
-                                <label for="perusahaan_id" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Pilih Perusahaan <span class="text-red-500">*</span>
-                                </label>
-                                <select class="form-input" id="perusahaan_id" name="perusahaan_id" required>
-                                    <option value="">-- Pilih Perusahaan --</option>
-                                    <?php foreach ($perusahaan as $p): ?>
-                                    <option value="<?= $p['id'] ?>">
-                                        <?= htmlspecialchars($p['nama_perusahaan']) ?> - <?= htmlspecialchars($p['kontak']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Periode PKL -->
-                    <div class="border-b border-gray-200 pb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-calendar-alt text-purple-600 mr-2"></i>
-                            Periode PKL
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="tanggal_mulai" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Tanggal Mulai <span class="text-red-500">*</span>
-                                </label>
-                                <input type="date" class="form-input" id="tanggal_mulai" name="tanggal_mulai" required min="<?= date('Y-m-d') ?>">
-                            </div>
-                            
-                            <div>
-                                <label for="tanggal_selesai" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Tanggal Selesai <span class="text-red-500">*</span>
-                                </label>
-                                <input type="date" class="form-input" id="tanggal_selesai" name="tanggal_selesai" required>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <p class="text-sm text-gray-600" id="info-durasi"></p>
-                        </div>
-                    </div>
-
-                    <!-- Alasan PKL -->
-                    <div class="border-b border-gray-200 pb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-comment-alt text-orange-600 mr-2"></i>
-                            Alasan Pemilihan PKL
-                        </h3>
-                        
-                        <div>
-                            <label for="alasan_pkl" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                Jelaskan alasan Anda memilih program PKL ini <span class="text-red-500">*</span>
-                            </label>
-                            <textarea class="form-input" id="alasan_pkl" name="alasan_pkl" rows="4" 
-                                      placeholder="Ceritakan mengapa Anda tertarik dengan program PKL ini, tujuan yang ingin dicapai, dan bagaimana ini akan membantu perkembangan karir Anda..." 
-                                      required></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Minimal 100 karakter</p>
-                        </div>
-                    </div>
-
-                    <!-- Upload Berkas -->
-                    <div class="border-b border-gray-200 pb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-file-upload text-red-600 mr-2"></i>
-                            Upload Berkas
-                        </h3>
+                        </h2>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="berkas_cv" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    CV/Resume
-                                </label>
-                                <input type="file" class="form-input" id="berkas_cv" name="berkas_cv" accept=".pdf,.doc,.docx">
-                                <p class="text-xs text-gray-500 mt-1">Format: PDF, DOC, DOCX (Maks. 5MB)</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
+                                <input type="text" 
+                                       value="<?= htmlspecialchars($_SESSION['nama_lengkap'] ?? '') ?>" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       disabled>
                             </div>
                             
                             <div>
-                                <label for="berkas_portofolio" class="form-label block text-sm font-semibold text-gray-700 mb-2">
-                                    Portofolio (Opsional)
-                                </label>
-                                <input type="file" class="form-input" id="berkas_portofolio" name="berkas_portofolio" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                <p class="text-xs text-gray-500 mt-1">Format: PDF, DOC, DOCX, JPG, PNG (Maks. 5MB)</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">NIS</label>
+                                <input type="text" 
+                                       value="<?= htmlspecialchars($_SESSION['nis'] ?? '') ?>" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       disabled>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Informasi Penting -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                            <i class="fas fa-info-circle mr-2"></i>Informasi Penting
-                        </h4>
-                        <ul class="text-sm text-blue-700 space-y-1">
-                            <li>• Pastikan semua data yang diisi sudah benar dan valid</li>
-                            <li>• Pendaftaran akan diverifikasi oleh admin sebelum diproses</li>
-                            <li>• Status pendaftaran dapat dilihat di dashboard siswa</li>
-                            <li>• Hubungi admin jika ada pertanyaan atau kendala</li>
-                        </ul>
+                    <!-- Data PKL -->
+                    <div class="mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-briefcase text-blue-500 mr-3"></i>
+                            Data PKL
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="jurusan_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Jurusan <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="jurusan_id" name="jurusan_id" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                        <option value="">Pilih Jurusan</option>
+                                        <?php foreach ($jurusan as $j): ?>
+                                            <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama_jurusan']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="perusahaan_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Perusahaan <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="perusahaan_id" name="perusahaan_id" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                        <option value="">Pilih Perusahaan</option>
+                                        <?php foreach ($perusahaan as $p): ?>
+                                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nama_perusahaan']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="tanggal_mulai" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tanggal Mulai <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="date" id="tanggal_mulai" name="tanggal_mulai" required
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                           min="<?= date('Y-m-d') ?>">
+                                </div>
+                                
+                                <div>
+                                    <label for="tanggal_selesai" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tanggal Selesai <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="date" id="tanggal_selesai" name="tanggal_selesai" required
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                           min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="alasan_pkl" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Alasan Memilih PKL <span class="text-red-500">*</span>
+                                </label>
+                                <textarea id="alasan_pkl" name="alasan_pkl" required rows="4"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                          placeholder="Jelaskan alasan Anda memilih program PKL ini (minimal 10 karakter)..."></textarea>
+                                <div class="text-sm text-gray-500 mt-1">
+                                    <span id="charCount">0</span> karakter
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="flex justify-end space-x-4 pt-4">
-                        <button type="button" onclick="history.back()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-3 rounded-lg transition-colors">
-                            <i class="fas fa-times mr-2"></i>Batal
-                        </button>
-                        <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors flex items-center">
-                            <i class="fas fa-paper-plane mr-2"></i>Kirim Pendaftaran
+                    <!-- Dokumen Pendukung -->
+                    <div class="mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-file-upload text-blue-500 mr-3"></i>
+                            Dokumen Pendukung (Opsional)
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    CV/Resume
+                                </label>
+                                <input type="file" name="berkas_cv" 
+                                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                <p class="text-sm text-gray-500 mt-1">Format: PDF, DOC, JPG, PNG (Maks. 5MB)</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Portofolio
+                                </label>
+                                <input type="file" name="berkas_portofolio" 
+                                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                <p class="text-sm text-gray-500 mt-1">Format: PDF, DOC, JPG, PNG (Maks. 5MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                        <a href="index.php?page=siswa" 
+                           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
+                            <i class="fas fa-arrow-left mr-2"></i>Kembali
+                        </a>
+                        
+                        <button type="submit" 
+                                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold flex items-center"
+                                <?= $pendaftaran_aktif ? 'disabled' : '' ?>>
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            <?= $pendaftaran_aktif ? 'Sudah Mendaftar' : 'Ajukan Pendaftaran' ?>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-        <?php endif; ?>
     </div>
 </div>
 
-<script src="../../assets/js/pendaftaran-siswa.js"></script>
+<script>
+// Character count for alasan_pkl
+document.getElementById('alasan_pkl').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+});
+
+// Form validation
+document.getElementById('formPendaftaran').addEventListener('submit', function(e) {
+    const tanggalMulai = new Date(document.getElementById('tanggal_mulai').value);
+    const tanggalSelesai = new Date(document.getElementById('tanggal_selesai').value);
+    const alasanPkl = document.getElementById('alasan_pkl').value;
+    
+    if (tanggalSelesai <= tanggalMulai) {
+        e.preventDefault();
+        alert('Tanggal selesai harus setelah tanggal mulai');
+        return false;
+    }
+    
+    // Validasi minimal durasi PKL (30 hari)
+    const diffTime = Math.abs(tanggalSelesai - tanggalMulai);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) {
+        e.preventDefault();
+        alert('Durasi PKL minimal 30 hari');
+        return false;
+    }
+    
+    if (alasanPkl.length < 10) {
+        e.preventDefault();
+        alert('Alasan PKL minimal 10 karakter');
+        return false;
+    }
+});
+
+// AJAX form submission
+document.getElementById('formPendaftaran').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    <?php if ($pendaftaran_aktif): ?>
+        alert('Anda sudah memiliki pendaftaran yang sedang diproses');
+        return false;
+    <?php endif; ?>
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengirim...';
+    submitBtn.disabled = true;
+    
+    fetch('process_pendaftaran.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.href = 'index.php?page=siswa';
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: data.message,
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Terjadi kesalahan saat mengirim formulir',
+            confirmButtonText: 'OK'
+        });
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+</script>

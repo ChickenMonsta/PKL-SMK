@@ -6,9 +6,9 @@
 }
 
 :root {
-    --yellow: #FFD700;        /* Kuning solid */
-    --yellow-light: #FFF9C4;  /* Kuning muda */
-    --yellow-dark: #FFC400;   /* Kuning gelap */
+    --yellow: #2563eb;        /* Accent (replaced yellow with soft blue) */
+    --yellow-light: #e6f0ff;  /* Accent light */
+    --yellow-dark: #1e40af;   /* Accent dark */
     --white: #FFFFFF;         /* Putih */
     --white-transparent: rgba(255, 255, 255, 0.9); /* Putih transparan */
     --black: #000000;         /* Hitam */
@@ -32,7 +32,7 @@ body {
 
 /* Hero Section - Kuning dengan abu transparan */
 .hero {
-    background: linear-gradient(rgba(255, 215, 0, 0.9), rgba(255, 215, 0, 0.8)), 
+    background: linear-gradient(rgba(37, 99, 235, 0.9), rgba(37, 99, 235, 0.8)), 
                 url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
     background-size: cover;
     background-position: center;
@@ -126,7 +126,7 @@ body {
     color: var(--black);
     text-decoration: none;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
 }
 
 .btn-outline {
@@ -205,7 +205,7 @@ body {
 
 .form-input:focus {
     border-color: var(--yellow);
-    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
     outline: none;
     background: var(--white);
 }
@@ -279,7 +279,7 @@ body {
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 3px solid rgba(255, 215, 0, 0.3);
+    border: 3px solid rgba(37, 99, 235, 0.3);
     border-radius: 50%;
     border-top-color: var(--yellow);
     animation: spin 1s ease-in-out infinite;
@@ -354,7 +354,7 @@ body {
     top: 20px;
     border-radius: 50%;
     z-index: 1;
-    box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
 }
 
 .left {
@@ -452,7 +452,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 215, 0, 0.9);
+    background: rgba(37, 99, 235, 0.9);
     padding: 20px;
     color: var(--black);
     transform: translateY(100%);
@@ -658,7 +658,7 @@ body {
 .alert-yellow {
     border-color: var(--yellow);
     color: var(--black);
-    background: rgba(255, 215, 0, 0.1);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .alert-gray {
@@ -669,7 +669,7 @@ body {
 
 /* Transparent overlays */
 .overlay-yellow {
-    background: rgba(255, 215, 0, 0.1);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .overlay-white {
@@ -695,7 +695,7 @@ body {
 
 /* Improved Gradients */
 .bg-gradient-primary {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
 }
 
 .bg-gradient-blue {
@@ -722,12 +722,12 @@ body {
 
 /* Button improvements */
 .btn-primary {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
     transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     transform: translateY(-2px);
 }
 

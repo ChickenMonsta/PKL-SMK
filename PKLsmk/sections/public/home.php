@@ -1,7 +1,5 @@
 <?php
-// Perbaiki path untuk public home
-require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/database.php';
+// File ini sudah mendapatkan $pdo dari bootstrap.php di index.php
 
 // Ambil data jurusan untuk ditampilkan
 try {
@@ -44,21 +42,6 @@ $gallery_items = [
         'title' => 'Desain Multimedia',
         'description' => 'Siswa MM membuat karya desain grafis'
     ],
-    [
-        'image' => 'https://images.unsplash.com/photo-1581093458791-375db59396ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2067&q=80',
-        'title' => 'Praktik Otomotif',
-        'description' => 'Siswa TKRO belajar service kendaraan'
-    ],
-    [
-        'image' => 'https://images.unsplash.com/photo-1559028012-481c04fa702d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
-        'title' => 'Bengkel Motor',
-        'description' => 'Siswa TBSM praktik service sepeda motor'
-    ],
-    [
-        'image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-        'title' => 'Presentasi Project',
-        'description' => 'Siswa mempresentasikan project akhir'
-    ]
 ];
 ?>
 
@@ -157,8 +140,6 @@ $gallery_items = [
                                 'RPL' => 'fa-laptop-code',
                                 'TKJ' => 'fa-network-wired',
                                 'MM' => 'fa-palette',
-                                'TKRO' => 'fa-car',
-                                'TBSM' => 'fa-motorcycle'
                             ];
                             $icon = $icons[$j['kode_jurusan']] ?? 'fa-book';
                             ?>

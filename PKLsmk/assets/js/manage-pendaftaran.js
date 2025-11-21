@@ -15,7 +15,7 @@ $(document).ready(function() {
             { "width": "15%", "targets": 3 }, // Perusahaan
             { "width": "15%", "targets": 4 }, // Periode
             { "width": "10%", "targets": 5 }, // Status
-            { "width": "15%", "targets": 6 }  // Aksi
+            { "width": "15%", "targets": 6 }  // Aksi
         ]
     });
 

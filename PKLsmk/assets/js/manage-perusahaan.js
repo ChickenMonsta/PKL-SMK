@@ -188,7 +188,7 @@ $(document).ready(function() {
         $('#edit_nama_perusahaan').focus();
     });
 
-    // Form validation
+    // Form validation: ensure kuota is not less than 1
     $('input[type="number"]').on('input', function() {
         const value = parseInt($(this).val());
         if (value < 1) {

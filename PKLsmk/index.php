@@ -1,6 +1,6 @@
 <?php
-// index.php
-session_start();
+// BOOTSTRAP UNTUK SEMUA HALAMAN - HARUS DI ATAS
+require_once 'bootstrap.php';
 
 // Routing system
 $page = $_GET['page'] ?? 'home';
@@ -51,8 +51,8 @@ $page_title = $titles[$page] ?? 'Pendaftaran PKL - SMK Negeri 7 Batam';
     
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fo0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rnt-awesome/6.4.el="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
     
@@ -100,7 +100,15 @@ $page_title = $titles[$page] ?? 'Pendaftaran PKL - SMK Negeri 7 Batam';
                     header('Location: index.php?page=dashboard');
                     exit();
                 }
-                include "sections/admin/$section.php";
+                $section_file = "sections/admin/$section.php";
+                if (file_exists($section_file)) {
+                    include $section_file;
+                } else {
+                    echo "<div class='container mx-auto px-4 py-8'>";
+                    echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>";
+                    echo "File section tidak ditemukan: $section_file";
+                    echo "</div></div>";
+                }
                 break;
                 
             case 'siswa':
@@ -108,7 +116,15 @@ $page_title = $titles[$page] ?? 'Pendaftaran PKL - SMK Negeri 7 Batam';
                     header('Location: index.php?page=dashboard');
                     exit();
                 }
-                include "sections/siswa/$section.php";
+                $section_file = "sections/siswa/$section.php";
+                if (file_exists($section_file)) {
+                    include $section_file;
+                } else {
+                    echo "<div class='container mx-auto px-4 py-8'>";
+                    echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>";
+                    echo "File section tidak ditemukan: $section_file";
+                    echo "</div></div>";
+                }
                 break;
                 
             default:

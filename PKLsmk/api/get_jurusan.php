@@ -1,12 +1,8 @@
 <?php
-require_once '../includes/config.php';
-require_once '../includes/database.php';
-
-header('Content-Type: application/json');
+require_once '../bootstrap.php';
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
-    echo json_encode(['error' => 'ID jurusan tidak valid']);
-    exit();
+    sendJson(['error' => 'ID jurusan tidak valid'], 400);
 }
 
 $id = intval($_GET['id']);
@@ -17,13 +13,12 @@ try {
     $jurusan = $stmt->fetch();
 
     if (!$jurusan) {
-        echo json_encode(['error' => 'Jurusan tidak ditemukan']);
-        exit();
+        sendJson(['error' => 'Jurusan tidak ditemukan'], 404);
     }
 
-    echo json_encode($jurusan);
+    sendJson($jurusan, 200);
     
 } catch (PDOException $e) {
-    echo json_encode(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+    sendJson(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
 }
 ?>

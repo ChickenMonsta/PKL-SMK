@@ -1,18 +1,8 @@
 <?php
-
 require_once __DIR__ . '/../../bootstrap.php';
 requireSiswa();
 
 $user_id = $_SESSION['user_id'];
-
-// Pastikan session nama_lengkap ada
-if (!isset($_SESSION['nama_lengkap'])) {
-    // Ambil data user dari database jika tidak ada di session
-    $stmt = $pdo->prepare("SELECT nama_lengkap FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
-    $user_data = $stmt->fetch();
-    $_SESSION['nama_lengkap'] = $user_data['nama_lengkap'] ?? 'Siswa';
-}
 
 // Ambil data pendaftaran siswa
 $stmt = $pdo->prepare("
@@ -27,7 +17,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $pendaftaran_terakhir = $stmt->fetch();
 
-// Ambil data user lengkap
+// Ambil data user
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user_data = $stmt->fetch();
@@ -43,7 +33,7 @@ $user_data = $stmt->fetch();
                     <p class="text-gray-600">Selamat datang, <?= htmlspecialchars($_SESSION['nama_lengkap']) ?>!</p>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="index.php?page=siswa&section=pendaftaran" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
+                    <a href="index.php?page=siswa&section=pendaftaran" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
                         <i class="fas fa-plus mr-2"></i>Daftar PKL
                     </a>
                     <a href="logout.php" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
@@ -170,7 +160,7 @@ $user_data = $stmt->fetch();
                             <i class="fas fa-file-alt text-gray-400 text-5xl mb-4"></i>
                             <h3 class="text-lg font-semibold text-gray-600 mb-2">Belum Ada Pendaftaran</h3>
                             <p class="text-gray-500 mb-4">Anda belum melakukan pendaftaran PKL</p>
-                            <a href="index.php?page=siswa&section=pendaftaran" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-block">
+                            <a href="index.php?page=siswa&section=pendaftaran" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-block">
                                 <i class="fas fa-plus mr-2"></i>Daftar Sekarang
                             </a>
                         </div>
@@ -184,7 +174,7 @@ $user_data = $stmt->fetch();
                 
                 <div class="space-y-4">
                     <div class="flex items-center space-x-4">
-                        <div class="w-16 h-16 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
                             <i class="fas fa-user text-white text-xl"></i>
                         </div>
                         <div>
@@ -215,7 +205,7 @@ $user_data = $stmt->fetch();
                     </div>
                     
                     <div class="pt-4 border-t border-gray-200">
-                        <a href="index.php?page=siswa&section=profile" class="text-yellow-600 hover:text-yellow-700 font-semibold flex items-center">
+                        <a href="index.php?page=siswa&section=profile" class="text-blue-600 hover:text-blue-700 font-semibold flex items-center">
                             <i class="fas fa-edit mr-2"></i>Edit Profil
                         </a>
                     </div>
@@ -228,7 +218,7 @@ $user_data = $stmt->fetch();
             <a href="index.php?page=siswa&section=pendaftaran" class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow group">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">Daftar PKL</h3>
-                    <i class="fas fa-plus text-yellow-600 text-xl group-hover:scale-110 transition-transform"></i>
+                    <i class="fas fa-plus text-blue-600 text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 <p class="text-gray-600 text-sm">Ajukan pendaftaran PKL baru</p>
             </a>
@@ -236,7 +226,7 @@ $user_data = $stmt->fetch();
             <a href="index.php?page=siswa&section=riwayat" class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow group">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">Riwayat</h3>
-                    <i class="fas fa-history text-blue-600 text-xl group-hover:scale-110 transition-transform"></i>
+                    <i class="fas fa-history text-green-600 text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 <p class="text-gray-600 text-sm">Lihat riwayat pendaftaran</p>
             </a>
@@ -244,7 +234,7 @@ $user_data = $stmt->fetch();
             <a href="index.php?page=siswa&section=profile" class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow group">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">Profil</h3>
-                    <i class="fas fa-user-edit text-green-600 text-xl group-hover:scale-110 transition-transform"></i>
+                    <i class="fas fa-user-edit text-purple-600 text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 <p class="text-gray-600 text-sm">Kelola data profil</p>
             </a>
@@ -252,7 +242,7 @@ $user_data = $stmt->fetch();
             <a href="index.php?page=home" class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow group">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">Beranda</h3>
-                    <i class="fas fa-home text-purple-600 text-xl group-hover:scale-110 transition-transform"></i>
+                    <i class="fas fa-home text-orange-600 text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 <p class="text-gray-600 text-sm">Kembali ke beranda</p>
             </a>
